@@ -1,3 +1,4 @@
+import torch
 import torchvision as tv
 from torch.utils.data import DataLoader, Dataset
 import numpy as np
@@ -73,12 +74,12 @@ class DataManager:
         np.random.shuffle(indices)
         train_idx, valid_idx = indices[split:], indices[:split]
 
-        valid_data = np.array([self.train_set.data[i] for i in valid_idx])
-        valid_targets = np.array([self.train_set.targets[i] for i in valid_idx])
+        valid_data = [self.train_set.data[i] for i in valid_idx]
+        valid_targets = [self.train_set.targets[i] for i in valid_idx]
         self.valid_set = DummyDataset(valid_data, valid_targets, transform=self.transform)
 
-        train_data = np.array([self.train_set.data[i] for i in train_idx])
-        train_targets = np.array([self.train_set.targets[i] for i in train_idx])
+        train_data = [self.train_set.data[i] for i in train_idx]
+        train_targets = [self.train_set.targets[i] for i in train_idx]
         self.train_set = DummyDataset(train_data, train_targets, transform=self.transform)
 
 
@@ -90,6 +91,8 @@ class DummyDataset(Dataset):
 
     def __getitem__(self, index):
         img = self.data[index]
+        if isinstance(img, torch.Tensor):
+            img = img.numpy()
         if self.transform is not None:
             img = self.transform(Image.fromarray(img))
         return img, self.targets[index]

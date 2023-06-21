@@ -32,7 +32,7 @@ class Trainer:
         for epoch in range(epochs):
             train_loss, train_accuracy = self._train_epoch()
             valid_loss, valid_accuracy = self.valid()
-            print("Epoch: {}, Train Loss: {:.4f}, Train Accuracy: {:.4f}, Test Loss: {:.4f}, Test Accuracy: {:.4f}".format(
+            print("Epoch: {}, Train Loss: {:.4f}, Train Accuracy: {:.4f}, Valid Loss: {:.4f}, Valid Accuracy: {:.4f}".format(
                 epoch, train_loss, train_accuracy, valid_loss, valid_accuracy))
 
             result["train_loss"].append(train_loss)

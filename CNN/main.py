@@ -20,18 +20,17 @@ model_settings = {
     "DenseNet":   [10, 0.001],
     }
 
-model_name = "AlexNet"
-dataset_name = "USPS"
-dataset_path = r"E:\python\dataset\USPS"
+model_name = "Linear"
+dataset_name = "mnist"
+dataset_path = r"E:\python\dataset\mnist"
 batch_size = 64
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-saved_path = "./saved"
+saved_path = "./saved/mnist"
 # 创建保存模型的文件夹
 if not os.path.exists(saved_path):
     os.makedirs(saved_path)
 
-
-if __name__ == "__main__":
+def main():
     tr = Trainer(model_name=model_name,
                  dataset_name=dataset_name,
                  dataset_path=dataset_path,
@@ -41,7 +40,7 @@ if __name__ == "__main__":
     print("Start training...")
     start = time.time()
     result = tr.train(epochs=model_settings[model_name][0],
-                      lr=model_settings[model_name][1],)
+                      lr=model_settings[model_name][1], )
     end = time.time()
     print("Training finished. Time cost: {:.2f} s".format(end - start))
 
@@ -68,3 +67,10 @@ if __name__ == "__main__":
     # 显示PR曲线
     show_pr(logits, y_trues, title="{} on {}, PR".format(model_name, dataset_name),
             save_path=os.path.join(saved_path, "{} on {} - PR.png".format(model_name, dataset_name)))
+
+if __name__ == "__main__":
+    # main()
+
+    for key, val in model_settings.items():
+        model_name = key
+        main()
