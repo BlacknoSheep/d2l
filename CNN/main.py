@@ -3,7 +3,7 @@ import torchsummary
 import time
 import os
 from trainer import Trainer
-from toolkit import show_result
+from toolkit import show_result, show_pr
 from logger import logger
 
 model_settings = {
@@ -20,7 +20,7 @@ model_settings = {
     "DenseNet":   [10, 0.001],
     }
 
-model_name = "MLP"
+model_name = "AlexNet"
 dataset_name = "USPS"
 dataset_path = r"E:\python\dataset\USPS"
 batch_size = 64
@@ -45,11 +45,17 @@ if __name__ == "__main__":
     end = time.time()
     print("Training finished. Time cost: {:.2f} s".format(end - start))
 
+    # test
+    test_loss, test_accuracy, logits, y_trues = tr.test()
+    print("Test Loss: {:.4f}, Test Accuracy: {:.4f}".format(test_loss, test_accuracy))
+
+    # 保存日志
     logger.add("model: {}".format(model_name))
     logger.add("dataset: {}".format(dataset_name))
     for key, val in result.items():
         logger.add("{}: {}".format(key, val))
     logger.add("time cost: {:.2f} s".format(end - start))
+    logger.add("test loss: {:.4f}, test accuracy: {:.4f}".format(test_loss, test_accuracy))
     logger.save(os.path.join(saved_path, "{} on {}.txt".format(model_name, dataset_name)))
 
     # 显示网络规模
@@ -58,3 +64,7 @@ if __name__ == "__main__":
     # 显示训练结果
     show_result(result, title="{} on {}".format(model_name, dataset_name),
                 save_path=os.path.join(saved_path, "{} on {}.png".format(model_name, dataset_name)))
+
+    # 显示PR曲线
+    show_pr(logits, y_trues, title="{} on {}, PR".format(model_name, dataset_name),
+            save_path=os.path.join(saved_path, "{} on {} - PR.png".format(model_name, dataset_name)))

@@ -15,6 +15,7 @@ class Trainer:
         self.model.to(device)
 
         self.train_loader = self.data_manger.get_dataloader(mode="train", batch_size=self.batch_size)
+        self.valid_loader = self.data_manger.get_dataloader(mode="valid", batch_size=self.batch_size)
         self.test_loader = self.data_manger.get_dataloader(mode="test", batch_size=self.batch_size)
 
         self.criterion = torch.nn.CrossEntropyLoss()
@@ -25,19 +26,19 @@ class Trainer:
         result = {
             "train_loss": [],
             "train_accuracy": [],
-            "test_loss": [],
-            "test_accuracy": []
+            "valid_loss": [],
+            "valid_accuracy": [],
         }
         for epoch in range(epochs):
             train_loss, train_accuracy = self._train_epoch()
-            test_loss, test_accuracy = self.eval()
+            valid_loss, valid_accuracy = self.valid()
             print("Epoch: {}, Train Loss: {:.4f}, Train Accuracy: {:.4f}, Test Loss: {:.4f}, Test Accuracy: {:.4f}".format(
-                epoch, train_loss, train_accuracy, test_loss, test_accuracy))
+                epoch, train_loss, train_accuracy, valid_loss, valid_accuracy))
 
             result["train_loss"].append(train_loss)
             result["train_accuracy"].append(train_accuracy)
-            result["test_loss"].append(test_loss)
-            result["test_accuracy"].append(test_accuracy)
+            result["valid_loss"].append(valid_loss)
+            result["valid_accuracy"].append(valid_accuracy)
         return result
 
     def _train_epoch(self):
@@ -53,7 +54,7 @@ class Trainer:
 
             self.optimizer.zero_grad()
             predicts = self.model(inputs)
-            loss = self.criterion(predicts, labels)
+            loss = self.criterion(predicts, labels.long())
             loss.backward()
             self.optimizer.step()
 
@@ -64,27 +65,46 @@ class Trainer:
             sum_accuracy += np.mean(np.equal(predict_labels, labels))
         return sum_loss / num_batches, sum_accuracy / num_batches
 
-    def eval(self):
+    def eval(self, eval_loader, return_logits=False):
         self.model.eval()
         sum_loss = 0
         sum_accuracy = 0
-        num_batches = len(self.test_loader)
+        num_batches = len(eval_loader)
 
-        for batch_index, data in enumerate(self.test_loader):
+        logits = []
+        y_trues = []
+
+        for batch_index, data in enumerate(eval_loader):
             inputs, labels = data
             inputs = inputs.to(self.device)
             labels = labels.to(self.device)
 
             with torch.no_grad():
                 predicts = self.model(inputs)
-                loss = self.criterion(predicts, labels)
+                loss = self.criterion(predicts, labels.long())
 
             predicts = predicts.detach().to('cpu').numpy()
             predict_labels = np.argmax(predicts, axis=1)
             labels = labels.to('cpu').numpy()
             sum_loss += loss.item()
             sum_accuracy += np.mean(np.equal(predict_labels, labels))
-        return sum_loss / num_batches, sum_accuracy / num_batches
+
+            logits.append(predicts)
+            y_trues.append(labels)
+        logits = np.concatenate(logits, axis=0)
+        y_trues = np.concatenate(y_trues, axis=0)
+        loss = sum_loss / num_batches
+        accuracy = sum_accuracy / num_batches
+        if return_logits:
+            return loss, accuracy, logits, y_trues
+        else:
+            return loss, accuracy
+
+    def valid(self):
+        return self.eval(self.valid_loader)
+
+    def test(self):
+        return self.eval(self.test_loader, return_logits=True)
 
     def get_model(self, model_name):
         if model_name == "Linear":
