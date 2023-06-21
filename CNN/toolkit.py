@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-def show_result(data:dict, title):
+def show_result(data:dict, title, save_path=None):
     colors = ["darkred", "red", "darkgreen", "green"]
     linestyles = ['-', ':', '-', ':']
     plt.figure(title, figsize=(10, 5))
@@ -14,4 +14,6 @@ def show_result(data:dict, title):
     plt.xlabel("epoch")
     plt.legend()
     plt.grid()
+    if save_path is not None:
+        plt.savefig(save_path)
     plt.show()

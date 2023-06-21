@@ -1,8 +1,10 @@
 import torch
 import torchsummary
 import time
+import os
 from trainer import Trainer
 from toolkit import show_result
+from logger import logger
 
 model_settings = {
     "Linear":     [10, 0.01],
@@ -18,11 +20,15 @@ model_settings = {
     "DenseNet":   [10, 0.001],
     }
 
-model_name = "NiN"
+model_name = "MLP"
 dataset_name = "USPS"
 dataset_path = r"E:\python\dataset\USPS"
 batch_size = 64
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+saved_path = "./saved"
+# 创建保存模型的文件夹
+if not os.path.exists(saved_path):
+    os.makedirs(saved_path)
 
 
 if __name__ == "__main__":
@@ -39,8 +45,16 @@ if __name__ == "__main__":
     end = time.time()
     print("Training finished. Time cost: {:.2f} s".format(end - start))
 
+    logger.add("model: {}".format(model_name))
+    logger.add("dataset: {}".format(dataset_name))
+    for key, val in result.items():
+        logger.add("{}: {}".format(key, val))
+    logger.add("time cost: {:.2f} s".format(end - start))
+    logger.save(os.path.join(saved_path, "{} on {}.txt".format(model_name, dataset_name)))
+
     # 显示网络规模
     torchsummary.summary(tr.model, (1, 28, 28))
 
     # 显示训练结果
-    show_result(result, title="{} on {}".format(model_name, dataset_name))
+    show_result(result, title="{} on {}".format(model_name, dataset_name),
+                save_path=os.path.join(saved_path, "{} on {}.png".format(model_name, dataset_name)))
